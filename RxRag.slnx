@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RxRag.Api/RxRag.Api.csproj" />
+    <Project Path="src/RxRag.Core/RxRag.Core.csproj" />
+    <Project Path="src/RxRag.Evals/RxRag.Evals.csproj" />
+    <Project Path="src/RxRag.Ingest/RxRag.Ingest.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RxRag.Tests/RxRag.Tests.csproj" />
+  </Folder>
+</Solution>

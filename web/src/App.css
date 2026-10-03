@@ -1,0 +1,317 @@
+/* Single left-aligned column. Max width keeps lines under about
+   75 characters, which is easier to read. */
+.app {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 56px 24px 96px;
+}
+
+.title {
+  margin: 0;
+  font-size: 2.6rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.intro {
+  margin: 14px 0 32px;
+  max-width: 54ch;
+  color: var(--muted);
+}
+
+/* ---- Question field ---- */
+.ask {
+  display: flex;
+  gap: 10px;
+}
+
+.ask input {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 16px;
+  font-size: 1.05rem;
+  background: var(--surface);
+  border: 1.5px solid var(--rule);
+  border-radius: 10px;
+  transition: border-color 120ms ease;
+}
+
+.ask input:hover {
+  border-color: var(--muted);
+}
+
+/* The field has its own focus look: a firm ink border. */
+.ask input:focus-visible {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--amber-soft);
+}
+
+.button {
+  padding: 0 22px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.button-primary {
+  background: var(--amber);
+  color: #fff;
+}
+
+.button-primary:hover:not(:disabled) {
+  background: #8f4c0f;
+}
+
+.button-primary:disabled {
+  background: var(--rule);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.button-quiet {
+  background: transparent;
+  border-color: var(--rule);
+  color: var(--ink);
+}
+
+.button-quiet:hover {
+  border-color: var(--ink);
+}
+
+/* ---- Example questions (empty state) ---- */
+.examples {
+  margin-top: 28px;
+}
+
+.examples p {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.examples ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.example {
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--rule);
+  border-radius: 999px;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.example:hover {
+  border-color: var(--amber);
+  background: var(--amber-soft);
+}
+
+/* ---- Status and errors ---- */
+.status {
+  margin-top: 32px;
+  color: var(--muted);
+}
+
+.error {
+  margin-top: 24px;
+  padding: 12px 16px;
+  border-left: 4px solid var(--danger);
+  background: #fbeceb;
+  color: var(--danger);
+  border-radius: 0 6px 6px 0;
+}
+
+/* ---- The answer: styled like a pharmacy label ----
+   White, firm border, amber strip on top. This is the one bold
+   element on the page; everything else stays quiet. */
+.label {
+  margin-top: 36px;
+  background: var(--surface);
+  border: 1.5px solid var(--ink);
+  border-top: 10px solid var(--amber);
+  border-radius: 6px;
+  padding: 22px 24px;
+}
+
+.label-text {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* Blinking bar at the end of a streaming answer. */
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--amber);
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* "Not in the labels" gets a calm, neutral look plus a hint. */
+.label-refused {
+  border-color: var(--rule);
+  border-top-color: var(--muted);
+}
+
+.hint {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* ---- Citation numbers inside the answer ----
+   Same amber circle as the source list, so the eye links them. */
+.cite {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.35em;
+  height: 1.35em;
+  margin: 0 1px;
+  padding: 0 4px;
+  vertical-align: 0.15em;
+  font-size: 0.7em;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--amber);
+  background: var(--amber-soft);
+  border: 1px solid var(--amber);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.cite:hover {
+  background: var(--amber);
+  color: #fff;
+}
+
+/* ---- Sources ---- */
+.sources {
+  margin-top: 28px;
+}
+
+.sources h2 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+
+.sources ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1.5px solid var(--rule);
+}
+
+.source {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1.5px solid var(--rule);
+}
+
+/* Brief amber flash when a citation in the answer opens this source. */
+.source-active {
+  animation: flash 1.2s ease-out;
+}
+
+@keyframes flash {
+  from {
+    background: var(--amber-soft);
+  }
+  to {
+    background: transparent;
+  }
+}
+
+.source-number {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--amber);
+  background: var(--amber-soft);
+  border: 1px solid var(--amber);
+  border-radius: 999px;
+}
+
+.source details summary {
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+}
+
+.source details summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Plus or minus after the title shows open or closed. */
+.source details summary::after {
+  content: '+';
+  margin-left: 8px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.source details[open] summary::after {
+  content: '\2212'; /* minus sign */
+}
+
+.excerpt {
+  margin: 10px 0 0;
+  padding-left: 14px;
+  border-left: 3px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+}
+
+.footnote {
+  margin-top: 48px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* ---- Small screens ---- */
+@media (max-width: 520px) {
+  .app {
+    padding-top: 36px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .ask {
+    flex-direction: column;
+  }
+
+  .button {
+    padding: 12px 22px;
+  }
+
+  .label {
+    padding: 18px;
+  }
+}

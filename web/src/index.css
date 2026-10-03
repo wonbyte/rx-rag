@@ -1,0 +1,66 @@
+/* Design tokens. Every color in the app comes from here, so a change
+   in one place changes the whole app. */
+:root {
+  --paper: #f5f6f3;       /* page background: cool, clinical off-white */
+  --surface: #ffffff;     /* fields and the answer label */
+  --ink: #1e2633;         /* main text, borders that matter */
+  --muted: #5f6b7a;       /* secondary text */
+  --rule: #d9ddd6;        /* quiet borders */
+  --amber: #a85a12;       /* prescription-bottle amber: actions and citations */
+  --amber-soft: #fbeedc;  /* amber tint for hover and highlight */
+  --danger: #a3261b;      /* errors only */
+
+  --font: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  color-scheme: light;
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+/* One focus style for everything you can tab to. Keyboard users must
+   always see where they are. */
+:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 2px;
+}
+
+/* People who turn off motion in their OS get no animations at all. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

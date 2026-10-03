@@ -1,0 +1,44 @@
+<!--
+  Directory.Build.props
+  MSBuild reads this file before every .csproj under this folder.
+  We put shared settings here once, so the 4 projects do not repeat them.
+  If a .csproj sets the same property, the .csproj value wins.
+-->
+<Project>
+
+  <PropertyGroup>
+    <!-- .NET 10 is the current LTS (long-term support) release. -->
+    <TargetFramework>net10.0</TargetFramework>
+
+    <!-- Nullable reference types: the compiler warns when a value can be null
+         and you did not check it. This stops most NullReferenceExceptions. -->
+    <Nullable>enable</Nullable>
+
+    <!-- Adds common usings (System, System.Linq, and so on) to every file. -->
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Turn on the built-in .NET analyzers at the newest rule set.
+         EnforceCodeStyleInBuild makes .editorconfig style rules run on build,
+         not only in the editor. -->
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- Build the XML doc file from /// comments. With the setting below,
+         a public type or method with no doc comment fails the build.
+         This is the C# version of "every exported func has go doc". -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Strict mode for app code only. A warning is a build error.
+       MSBuildProjectName is the .csproj file name without the extension. -->
+  <PropertyGroup Condition="!$(MSBuildProjectName.EndsWith('.Tests'))">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Test code: test methods do not need doc comments.
+       CS1591 is the "missing XML comment" warning. -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+</Project>

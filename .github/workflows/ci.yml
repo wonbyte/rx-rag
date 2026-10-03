@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - run: dotnet test --configuration Release
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci && npm run build
+        working-directory: web
+
+      - run: docker build -t rxrag:${{ github.sha }} .
+
+  # The eval gate. Runs on main only, because each run costs tokens.
+  # If quality drops below the thresholds, the job fails and blocks deploy.
+  evals:
+    needs: build
+    # Skip when Azure is not set up (forks, or before you add the variables).
+    if: github.event_name == 'push' && vars.RXRAG_OPENAI_ENDPOINT != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC login to Azure: no stored passwords.
+    env:
+      RxRag__OpenAIEndpoint: ${{ vars.RXRAG_OPENAI_ENDPOINT }}
+      RxRag__ChatDeployment: chat
+      RxRag__EmbeddingDeployment: embed
+      RxRag__SearchEndpoint: ${{ vars.RXRAG_SEARCH_ENDPOINT }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - run: dotnet run --project src/RxRag.Evals -c Release -- evals/golden.json

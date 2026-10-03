@@ -1,0 +1,82 @@
+# Workload identity: the pod gets an Entra ID identity with no secrets.
+# DefaultAzureCredential in our code picks it up automatically.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rxrag
+  annotations:
+    azure.workload.identity/client-id: "<MANAGED_IDENTITY_CLIENT_ID>"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rxrag
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: rxrag }
+  template:
+    metadata:
+      labels:
+        app: rxrag
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: rxrag
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: api
+          image: <ACR_NAME>.azurecr.io/rxrag:<TAG>
+          ports:
+            - containerPort: 8080
+          env:
+            - { name: RxRag__OpenAIEndpoint,      value: "https://<oai>.openai.azure.com/" }
+            - { name: RxRag__ChatDeployment,      value: "chat" }
+            - { name: RxRag__EmbeddingDeployment, value: "embed" }
+            - { name: RxRag__SearchEndpoint,      value: "https://<search>.search.windows.net" }
+          # Readiness: send traffic only when ready.
+          # Liveness: restart the pod if it hangs.
+          readinessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits:   { memory: 512Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rxrag
+spec:
+  selector: { app: rxrag }
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+# Scale on CPU. The real bottleneck is often the model's token quota,
+# not CPU, so watch 429s from Azure OpenAI too.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: rxrag
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: rxrag }
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 70 }
