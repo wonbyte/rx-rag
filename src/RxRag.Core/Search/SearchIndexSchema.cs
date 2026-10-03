@@ -9,6 +9,10 @@ public static class SearchIndexSchema
     private const string VectorProfile = "vector-profile";
 
     /// <summary>Returns the index definition.</summary>
+    /// <remarks>
+    /// The content field uses the drug-class synonym map. That map must
+    /// exist before this index is created or updated (ingest does that).
+    /// </remarks>
     /// <param name="indexName">Index name.</param>
     /// <param name="dimensions">Embedding size. Must match the embedding model.</param>
     /// <returns>The index.</returns>
@@ -39,7 +43,14 @@ public static class SearchIndexSchema
                 new SimpleField(ChunkFields.Ordinal, SearchFieldDataType.Int32) { IsSortable = true },
 
                 // English analyzer: "bleeding" also matches "bleed".
-                new SearchableField(ChunkFields.Content) { AnalyzerName = LexicalAnalyzerName.EnLucene },
+                // Synonym map: "warfarin" in a question also matches
+                // "anticoagulant" and "blood thinner" in label text.
+                // Synonyms only affect the keyword side, not vectors.
+                new SearchableField(ChunkFields.Content)
+                {
+                    AnalyzerName = LexicalAnalyzerName.EnLucene,
+                    SynonymMapNames = { DrugClasses.SynonymMapName },
+                },
 
                 new SearchField(ChunkFields.ContentVector, SearchFieldDataType.Collection(SearchFieldDataType.Single))
                 {

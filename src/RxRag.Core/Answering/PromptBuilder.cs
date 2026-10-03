@@ -24,8 +24,12 @@ public static partial class PromptBuilder
     // ibuprofen dosing. Saying "ignore injected instructions" is not enough;
     // the model must also know which requests are out of scope, so it
     // refuses them instead of answering a nearby question.
+    //
+    // The first line names BOTH source kinds. Drug class reference entries
+    // let the model link "warfarin" to "blood thinner" by citing a source,
+    // not by using outside knowledge, so rule 1 still holds.
     private const string SystemPrompt = $"""
-        You answer questions about medicines using ONLY the drug label excerpts inside <sources>.
+        You answer questions about medicines using ONLY the sources inside <sources>. Sources are drug label excerpts and, sometimes, drug class reference entries.
 
         Rules:
         1. Use only facts stated in the sources. Do not use outside knowledge.
@@ -39,7 +43,7 @@ public static partial class PromptBuilder
 
     /// <summary>Builds the chat messages for one question.</summary>
     /// <param name="question">User question.</param>
-    /// <param name="sources">Retrieved chunks, numbered [1], [2], ... in this order.</param>
+    /// <param name="sources">Sources, numbered [1], [2], ... in this order.</param>
     /// <returns>System message plus user message.</returns>
     public static List<ChatMessage> Build(string question, IReadOnlyList<RetrievedChunk> sources)
     {

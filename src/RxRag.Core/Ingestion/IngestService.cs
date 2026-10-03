@@ -1,5 +1,6 @@
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
+using Azure.Search.Documents.Indexes.Models;
 using Azure.Search.Documents.Models;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
@@ -15,10 +16,10 @@ namespace RxRag.Core.Ingestion;
 /// The "get ready" pipeline: fetch labels, chunk, embed, upload.
 /// </summary>
 /// <remarks>
-/// Safe to run again. The index is created or updated in place, and chunk
-/// IDs are stable, so uploads overwrite. Known limit: if a label section
-/// gets SHORTER, its old extra chunks stay. A real system would delete
-/// chunks by setId before re-uploading that label.
+/// Safe to run again. The synonym map and index are created or updated in
+/// place, and chunk IDs are stable, so uploads overwrite. Known limit: if a
+/// label section gets SHORTER, its old extra chunks stay. A real system
+/// would delete chunks by setId before re-uploading that label.
 /// </remarks>
 /// <param name="openFda">openFDA client.</param>
 /// <param name="chunker">Chunker.</param>
@@ -50,6 +51,12 @@ public sealed partial class IngestService(
     {
         ArgumentNullException.ThrowIfNull(genericNames);
         var o = options.Value;
+
+        // Synonym map FIRST: the index refers to it by name, and Azure
+        // rejects an index that names a map that does not exist.
+        await indexClient.CreateOrUpdateSynonymMapAsync(
+            new SynonymMap(DrugClasses.SynonymMapName, DrugClasses.ToSolrSynonyms()),
+            cancellationToken: cancellationToken);
 
         await indexClient.CreateOrUpdateIndexAsync(
             SearchIndexSchema.Build(o.IndexName, o.EmbeddingDimensions), cancellationToken: cancellationToken);

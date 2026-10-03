@@ -3,8 +3,14 @@ using RxRag.Core.Answering;
 
 namespace RxRag.Evals;
 
-// One test case from golden.json.
-internal sealed record EvalCase(string Id, string Question, string? ExpectGeneric, bool ExpectNoAnswer);
+// One test case from golden.json. ExpectSections lists the label section
+// titles that should hold the answer, for the retrieval check.
+internal sealed record EvalCase(
+    string Id,
+    string Question,
+    string? ExpectGeneric,
+    IReadOnlyList<string>? ExpectSections,
+    bool ExpectNoAnswer);
 
 // Scores from the judge model. 1 = bad, 5 = good.
 internal sealed record JudgeScore(int Grounded, int Relevant, string Reason);

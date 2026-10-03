@@ -111,4 +111,27 @@ public class AnswerServiceTests
         Assert.Equal("done", events[1].Type);
         Assert.Equal(0, chat.Calls);
     }
+
+    [Fact]
+    public async Task Ask_AddsDrugClassFact_AfterLabelChunks()
+    {
+        // Sources become: [1] Warn (label), [2] warfarin class fact.
+        var answer = await Service(new FakeRetriever(Warn), new FakeChat("Warfarin is a blood thinner [2]."))
+            .AskAsync("Is warfarin a blood thinner?");
+
+        var citation = Assert.Single(answer.Citations);
+        Assert.Equal("class_warfarin", citation.ChunkId);
+        Assert.Equal("rxrag drug class reference (warfarin), Drug class", citation.Source);
+    }
+
+    [Fact]
+    public async Task Ask_NoLabelChunks_ClassFactAloneDoesNotAnswer()
+    {
+        var chat = new FakeChat("unused");
+
+        var answer = await Service(new FakeRetriever(), chat).AskAsync("Is warfarin a blood thinner?");
+
+        Assert.Equal(PromptBuilder.NoAnswer, answer.Text);
+        Assert.Equal(0, chat.Calls);
+    }
 }

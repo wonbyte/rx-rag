@@ -1,14 +1,35 @@
 using System.Net.ServerSentEvents;
 using System.Runtime.CompilerServices;
 using System.Threading.RateLimiting;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.RateLimiting;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using RxRag.Core;
 using RxRag.Core.Answering;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRxRag(builder.Configuration);
+
+// Application Insights: one trace per question. It holds the HTTP request,
+// the embedding call, the search call, and the chat call, each with its
+// duration; the model spans also carry token counts.
+// Only on when a connection string is set, so local dev still works
+// without it. Prompt and answer TEXT is not recorded: UseOpenTelemetry()
+// keeps sensitive data off by default, which matters for health questions.
+if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
+{
+    // Default ActivitySource and Meter name used by
+    // Microsoft.Extensions.AI's UseOpenTelemetry().
+    const string AiTelemetry = "Experimental.Microsoft.Extensions.AI";
+
+    var otel = builder.Services.AddOpenTelemetry();
+    otel.UseAzureMonitor(); // reads APPLICATIONINSIGHTS_CONNECTION_STRING
+    otel.WithTracing(t => t.AddSource(AiTelemetry));
+    otel.WithMetrics(m => m.AddMeter(AiTelemetry));
+}
 
 // RFC 7807 "problem details" JSON for all errors. No stack traces leak out.
 builder.Services.AddProblemDetails();

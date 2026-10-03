@@ -46,8 +46,7 @@ public sealed partial class AnswerService(IRetriever retriever, IChatClient chat
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(question);
 
-        var sources = await retriever.RetrieveAsync(question, cancellationToken);
-        LogRetrieved(logger, sources.Count);
+        var sources = await GatherSourcesAsync(question, cancellationToken);
 
         // No sources: do not call the model at all. It saves cost, and
         // the model has nothing to ground on, so any answer would be a guess.
@@ -75,8 +74,7 @@ public sealed partial class AnswerService(IRetriever retriever, IChatClient chat
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(question);
 
-        var sources = await retriever.RetrieveAsync(question, cancellationToken);
-        LogRetrieved(logger, sources.Count);
+        var sources = await GatherSourcesAsync(question, cancellationToken);
 
         if (sources.Count == 0)
         {
@@ -104,7 +102,25 @@ public sealed partial class AnswerService(IRetriever retriever, IChatClient chat
         yield return new AnswerEvent(AnswerEvent.Done, Citations: Cite(full.ToString(), sources));
     }
 
-    // Maps each [n] in the answer back to the chunk it points at.
+    // Label chunks from search, then a drug-class fact for each drug the
+    // question names. Class facts go LAST, so label text keeps the low
+    // numbers. If search found nothing, we add nothing: a class fact alone
+    // is not enough to answer a question about a drug's label.
+    private async Task<IReadOnlyList<RetrievedChunk>> GatherSourcesAsync(string question, CancellationToken ct)
+    {
+        var found = await retriever.RetrieveAsync(question, ct);
+        if (found.Count == 0)
+        {
+            LogSources(logger, 0, 0);
+            return found;
+        }
+
+        var classes = DrugClasses.FindIn(question).Select(DrugClasses.ToSource).ToList();
+        LogSources(logger, found.Count, classes.Count);
+        return [.. found, .. classes];
+    }
+
+    // Maps each [n] in the answer back to the source it points at.
     // CitedNumbers already drops numbers outside 1..sources.Count, so
     // sources[n - 1] is always a valid index here.
     private static List<Citation> Cite(string text, IReadOnlyList<RetrievedChunk> sources) =>
@@ -116,6 +132,6 @@ public sealed partial class AnswerService(IRetriever retriever, IChatClient chat
             })
             .ToList();
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Retrieved {Count} chunks")]
-    private static partial void LogRetrieved(ILogger logger, int count);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Retrieved {Chunks} chunks and {Classes} drug class facts")]
+    private static partial void LogSources(ILogger logger, int chunks, int classes);
 }
